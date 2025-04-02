@@ -28,7 +28,7 @@ export default defineConfig({
         extensions: ['.js', '.vue']
     },
     server: {
-        host: "0.0.0.0",
+        host: "172.16.2.31",
         cors: true
     }
 });
