@@ -1,12 +1,22 @@
 <script setup>
 import {ref} from "vue";
-import {Link} from "@inertiajs/vue3"
+import {Link, useForm} from "@inertiajs/vue3"
+
+const form = useForm({
+    name: '',
+    email: '',
+    password: '',
+    password_confirmation: '',
+});
+
+const submit = () => {
+    form.post('register');
+};
 
 const visible = ref(false);
 </script>
 
 <template>
-
     <div class="pt-8 mt-8">
         <v-card
             class="mx-auto px-12 pb-8 pt-6 mt-8"
@@ -15,13 +25,15 @@ const visible = ref(false);
             rounded="lg"
         >
             <v-card-text class="text-center text-h4 font-weight-medium">Sign up for an account</v-card-text>
-            <v-form  lazy-validation >
-                <div class="text-subtitle-1 text-medium-emphasis">Username</div>
+            <v-form lazy-validation @submit.prevent="submit">
+                <div class="text-subtitle-1 text-medium-emphasis">Name</div>
                 <v-text-field
                     density="compact"
-                    placeholder="Username"
+                    placeholder="Name"
                     prepend-inner-icon="mdi-account-outline"
                     variant="outlined"
+                    v-model="form.name"
+                    :error-messages="form.errors.name ?? form.errors.name"
                 />
 
                 <div class="text-subtitle-1 text-medium-emphasis">Email</div>
@@ -31,6 +43,8 @@ const visible = ref(false);
                     prepend-inner-icon="mdi-email-outline"
                     variant="outlined"
                     type="email"
+                    v-model="form.email"
+                    :error-messages="form.errors.email ?? form.errors.email"
                 />
 
                 <div class="text-subtitle-1 text-medium-emphasis d-flex align-center justify-space-between">Password
@@ -41,6 +55,8 @@ const visible = ref(false);
                     placeholder="Enter your password"
                     prepend-inner-icon="mdi-lock-outline"
                     variant="outlined"
+                    v-model="form.password"
+                    :error-messages="form.errors.password ?? form.errors.password"
                 >
                     <template v-slot:append-inner>
                         <v-icon
@@ -57,6 +73,7 @@ const visible = ref(false);
                     placeholder="Confirm your password"
                     prepend-inner-icon="mdi-lock-outline"
                     variant="outlined"
+                    v-model="form.password_confirmation"
                 />
 
                 <v-btn

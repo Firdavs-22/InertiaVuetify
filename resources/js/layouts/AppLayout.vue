@@ -13,8 +13,6 @@ const theme = ref('dark')
 const links = [
     {title: 'Profile', icon: 'mdi-home', url: '/'},
     {title: 'About', icon: 'mdi-account', url: '/about'},
-    {title: 'Login', icon: 'mdi-login', url: '/login'},
-    {title: 'Register', icon: 'mdi-account-plus', url: '/register'},
 ]
 
 const page = usePage()
@@ -24,9 +22,11 @@ const page = usePage()
 <template>
     <v-app :theme="theme">
         <v-layout>
-            <AppNavigation  :drawer="drawer" :links="links" :page="page" />
+            <AppNavigation v-if="page.props.auth.user" :drawer="drawer" :links="links" :page="page" />
 
             <AppBar
+                v-if="page.props.auth.user"
+                :user="page.props.auth.user"
                 :theme="theme"
                 @changeTheme="theme = theme === 'dark' ? 'light' : 'dark'"
                 @changeNav="drawer = !drawer"
@@ -40,4 +40,3 @@ const page = usePage()
         </v-layout>
     </v-app>
 </template>
-
