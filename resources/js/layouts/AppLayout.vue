@@ -13,6 +13,7 @@ const theme = ref('dark')
 const links = [
     {title: 'Home', icon: 'mdi-home', url: '/'},
     {title: 'About', icon: 'mdi-account', url: '/about'},
+    {title: 'Posts', icon: 'mdi-post', url: '/posts'},
 ]
 
 const page = usePage()

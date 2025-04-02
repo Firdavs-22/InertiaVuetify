@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PostController;
 use Illuminate\Support\Facades\Route;
 
 
@@ -8,6 +9,8 @@ Route::middleware("auth")->group(function () {
     Route::inertia("/", "Home")->name("home");
     Route::inertia("/about", "About")->name("about");
     Route::post("/logout", [AuthController::class, "logout"])->name("logout");
+
+    Route::get("/posts", [PostController::class, "index"])->name("posts.index");
 });
 
 Route::middleware("guest")->group(function () {
