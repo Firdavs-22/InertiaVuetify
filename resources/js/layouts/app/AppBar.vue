@@ -1,7 +1,8 @@
 <script setup>
 import {router} from "@inertiajs/vue3";
+import {getAvatar} from "@/utlis/avatar.js";
 
-defineProps({
+const props = defineProps({
     theme: String,
     user: Object,
 })
@@ -12,6 +13,8 @@ const logout = () => {
     router.post("logout");
 }
 
+const {color,icon} = getAvatar(props.user.id);
+
 </script>
 
 <template>
@@ -21,7 +24,7 @@ const logout = () => {
                 {{ user.name }}
             </span>
             <v-btn class="ml-1" height="48" slim icon>
-                <v-avatar icon="mdi-account" color="primary" size="32" text="123"/>
+                <v-avatar :icon="icon" :color="color" size="32"/>
                 <v-menu activator="parent" open-on-hover close-delay="20000">
                     <v-list density="compact" nav>
                         <v-list-item
