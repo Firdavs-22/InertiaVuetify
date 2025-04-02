@@ -10,7 +10,9 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post('register');
+    form.post('register',{
+        preserveScroll: true
+    });
 };
 
 const visible = ref(false);
@@ -84,6 +86,7 @@ const visible = ref(false);
                     block
                     type="submit"
                     text="Sign Up"
+                    :loading="form.processing"
                 />
             </v-form>
 

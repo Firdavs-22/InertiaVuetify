@@ -8,7 +8,10 @@ const form = useForm({
 });
 
 const submit = () => {
-    form.post('login');
+    console.log(form)
+    form.post('login',{
+        preserveScroll: true
+    });
 };
 
 const visible = ref(false);
@@ -64,6 +67,7 @@ const visible = ref(false);
                     block
                     type="submit"
                     text="Log In"
+                    :loading="form.processing"
                 />
             </v-form>
 

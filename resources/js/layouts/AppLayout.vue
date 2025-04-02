@@ -11,7 +11,7 @@ const theme = ref('dark')
 
 
 const links = [
-    {title: 'Profile', icon: 'mdi-home', url: '/'},
+    {title: 'Home', icon: 'mdi-home', url: '/'},
     {title: 'About', icon: 'mdi-account', url: '/about'},
 ]
 
