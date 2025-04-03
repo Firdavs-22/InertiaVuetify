@@ -8,6 +8,7 @@ use App\Models\Tag;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\File;
+use Inertia\Inertia;
 use Inertia\Response;
 use Inertia\ResponseFactory;
 
@@ -15,10 +16,11 @@ class PostController extends Controller
 {
     public function index(): Response|ResponseFactory
     {
-        $posts = Post::with(['tags',"user"])->latest()->simplePaginate(10);
-
         return Inertia('Posts/Index', [
-            "posts" => PostResource::collection($posts),
+            "posts" => fn () =>  PostResource::collection(Post::with(['tags',"user"])->latest()->simplePaginate(9)),
+            "tags" => Inertia::defer(function()  {;
+                return Tag::all(['name']);
+            }),
         ]);
     }
 

@@ -1,13 +1,14 @@
 <script setup>
 import {nextTick, ref, watch} from 'vue'
 import Card from "@/components/Card.vue";
-import {useForm, router, usePage} from "@inertiajs/vue3";
+import {useForm, usePage} from "@inertiajs/vue3";
 
 const props = defineProps({
     dialog: Boolean,
+    tags: Array,
 });
 
-const emits = defineEmits(["closeDialog"]);
+const emits = defineEmits(["closeDialog","reloadPosts"]);
 
 const form = useForm({
     title: '',
@@ -17,7 +18,6 @@ const form = useForm({
     imagePreview: null,
 })
 
-const items = ['Gaming', 'Programming', 'Vue', 'Vuetify']
 const search = ref(null)
 const previewDialog = ref(false)
 const postActive = ref(false)
@@ -61,6 +61,9 @@ watch(form, (newVal) => {
     postActive.value = !!(newVal.imagePreview && newVal.title && newVal.content && newVal.tags.length > 0);
 })
 
+const closeDialog = () => emits('closeDialog')
+
+
 const handleCreate = () => {
     if (postActive.value){
         form.transform((data) => {
@@ -70,15 +73,13 @@ const handleCreate = () => {
         form.post("posts",{
             forceFormData: true,
             onSuccess: () => {
+                closeDialog()
+                emits("reloadPosts")
                 form.reset()
                 form.imagePreview = null
                 form.image = null
                 search.value = null
                 previewDialog.value = false
-                emits('closeDialog')
-                router.reload({
-                    only: ['posts'],
-                })
             },
         })
     }
@@ -89,7 +90,7 @@ const handleCreate = () => {
     <v-dialog
         max-width="800"
         :model-value="dialog"
-        @update:model-value="$emit('closeDialog')"
+        @update:model-value="closeDialog"
     >
         <v-card
             title="Publish a Post"
@@ -123,7 +124,9 @@ const handleCreate = () => {
                             v-model="form.tags"
                             v-model:search="search"
                             :hide-no-data="false"
-                            :items="items"
+                            :items="tags"
+                            item-title="name"
+                            item-value="name"
                             hint="Maximum of 5 tags, Minimum of 1 tag"
                             label="Add some tags"
                             chips
@@ -133,6 +136,7 @@ const handleCreate = () => {
                             multiple
                             persistent-hint
                             clearable
+                            :return-object="false"
                         >
                             <template v-slot:no-data>
                                 <v-list-item>
@@ -164,7 +168,7 @@ const handleCreate = () => {
             <v-divider/>
 
             <v-card-actions class="px-6 py-4">
-                <v-btn text="Cancel" variant="flat" color="blue-grey" @click="$emit('closeDialog')"/>
+                <v-btn text="Cancel" variant="flat" color="blue-grey" @click="closeDialog"/>
 
                 <v-spacer/>
 

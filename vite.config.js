@@ -3,7 +3,7 @@ import laravel from 'laravel-vite-plugin';
 import Vue from '@vitejs/plugin-vue';
 import Vuetify from "vite-plugin-vuetify"
 import {fileURLToPath, URL} from 'node:url'
-import {tr} from "vuetify/locale";
+import vueDevTools from 'vite-plugin-vue-devtools'
 
 export default defineConfig({
     plugins: [
@@ -19,6 +19,7 @@ export default defineConfig({
                 }
             }
         }),
+        vueDevTools(),
         Vuetify()
     ],
     resolve: {

@@ -1,14 +1,37 @@
 <script setup>
 import Card from "@/components/Card.vue";
 import CreateDialog from "@/Pages/Posts/CreateDialog.vue";
-import {ref} from "vue";
+import {nextTick, ref, watchEffect} from "vue";
+import {Deferred, router} from "@inertiajs/vue3";
 
-defineProps({
-    posts: Array
+const props = defineProps({
+    posts: Object,
+    tags: Array,
 })
 
-
+const isDataLoaded = ref(false);
 const dialog = ref(false);
+
+watchEffect(() => {
+    if (props.tags) {
+        isDataLoaded.value = true
+        dialog.value = false
+    }
+})
+
+const handleOpenDialog = () => dialog.value = true
+
+const handleCloseDialog = () => dialog.value = false
+
+const reloadPosts = async () => {
+    console.log("reload posts")
+    handleCloseDialog()
+    await nextTick()
+    router.reload({
+        only: ['posts'],
+    })
+}
+
 </script>
 
 <template>
@@ -17,7 +40,8 @@ const dialog = ref(false);
         <v-btn
             color="primary"
             text="create post"
-            @click="dialog = true"
+            @click="handleOpenDialog"
+            :loading="!isDataLoaded"
         />
     </div>
     <v-row style="max-height: 45em; overflow-y: auto;">
@@ -39,5 +63,8 @@ const dialog = ref(false);
             />
         </v-col>
     </v-row>
-    <CreateDialog :dialog="dialog" @close-dialog="dialog = false"/>
+    <Deferred data="tags">
+        <template #fallback/>
+        <CreateDialog :dialog="dialog" @closeDialog="handleCloseDialog" :tags="tags" @reloadPosts="reloadPosts"/>
+    </Deferred>
 </template>
