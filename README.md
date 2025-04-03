@@ -27,7 +27,13 @@
     ```bash
     php artisan migrate
     ```
-6. **Start the development server:**
+   
+6. **Store the application key:**
+    ```bash
+    php artisan storage:link
+    ```
+   
+7**Start the development server:**
     ```bash
    composer run dev
     ```

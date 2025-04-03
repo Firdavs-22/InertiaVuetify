@@ -1,15 +1,20 @@
 <script setup>
-import { defineProps } from 'vue';
+import {defineProps} from 'vue';
+import {getAvatar} from "@/utlis/avatar.js";
 
 const props = defineProps({
     title: String,
     content: String,
-    username:String,
-    avatar: String,
+    username: String,
+    avatar: Number,
     image: String,
     tags: Array,
-    publish_at: String,
+    published_at: String,
 });
+
+const {icon, color} = getAvatar(props.avatar)
+
+
 </script>
 
 <template>
@@ -19,18 +24,31 @@ const props = defineProps({
             height="200"
             class="bg-surface-lights"
             cover
-        />
+        >
+            <template v-slot:placeholder>
+                <v-skeleton-loader
+                    class="mx-auto"
+                    max-width="500"
+                    type="image"
+                />
+            </template>
+        </v-img>
         <v-avatar
-            :image="avatar"
-            size="85"
+            :color="color"
             border="lg"
-            class="mt-n13 ma-auto"
-        />
+            class="mt-n7 ma-auto"
+            size="50"
+        >
+            <v-icon :icon="icon" size="x-large"/>
+        </v-avatar>
         <v-card-item>
             <v-card-subtitle class="py-0">@{{ username }}</v-card-subtitle>
-            <v-card-title class="text-h6">{{title}}</v-card-title>
-            <v-card-text class=" text-medium-emphasis py-0 my-1">{{content}}</v-card-text>
-            <v-card-subtitle class="py-0 text-subtitle-2 text-disabled">Published: {{publish_at}}</v-card-subtitle>
+            <v-card-title class="text-h6">{{ title }}</v-card-title>
+            <v-card-text class=" text-medium-emphasis py-0 my-1">{{ content }}</v-card-text>
+            <v-card-subtitle class="py-0 text-subtitle-2 text-disabled">Published: {{
+                    published_at
+                }}
+            </v-card-subtitle>
             <div>
                 <v-chip-group
                     selected-class="text-primary"
@@ -39,10 +57,10 @@ const props = defineProps({
                 >
                     <v-chip
                         v-for="tag in tags"
-                        :key="tag"
+                        :key="tag.id"
                         density="compact"
                         size="small"
-                        :text="'#'+tag"
+                        :text="'#'+tag.name"
                     />
                 </v-chip-group>
             </div>

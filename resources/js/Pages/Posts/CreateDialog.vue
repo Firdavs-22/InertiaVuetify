@@ -1,13 +1,13 @@
 <script setup>
 import {nextTick, ref, watch} from 'vue'
 import Card from "@/components/Card.vue";
-import {useForm} from "@inertiajs/vue3";
+import {useForm, router, usePage} from "@inertiajs/vue3";
 
 const props = defineProps({
     dialog: Boolean,
 });
 
-defineEmits(["closeDialog"]);
+const emits = defineEmits(["closeDialog"]);
 
 const form = useForm({
     title: '',
@@ -17,16 +17,12 @@ const form = useForm({
     imagePreview: null,
 })
 
-const fake = {
-    username: 'Test',
-    avatar: 'https://vuetifyjs.b-cdn.net/images/john-smirk.png',
-    publish_at: 'Not Published',
-}
-
 const items = ['Gaming', 'Programming', 'Vue', 'Vuetify']
 const search = ref(null)
 const previewDialog = ref(false)
 const postActive = ref(false)
+
+const page = usePage()
 
 const rules = [
     value => {
@@ -62,8 +58,31 @@ watch(() => form.tags, newTags => {
 })
 
 watch(form, (newVal) => {
-        postActive.value = !!(newVal.imagePreview && newVal.title && newVal.content && newVal.tags.length > 0);
-    })
+    postActive.value = !!(newVal.imagePreview && newVal.title && newVal.content && newVal.tags.length > 0);
+})
+
+const handleCreate = () => {
+    if (postActive.value){
+        form.transform((data) => {
+            const { imagePreview, ...rest } = data
+            return rest
+        })
+        form.post("posts",{
+            forceFormData: true,
+            onSuccess: () => {
+                form.reset()
+                form.imagePreview = null
+                form.image = null
+                search.value = null
+                previewDialog.value = false
+                emits('closeDialog')
+                router.reload({
+                    only: ['posts'],
+                })
+            },
+        })
+    }
+}
 </script>
 
 <template>
@@ -153,7 +172,7 @@ watch(form, (newVal) => {
                        @click="previewDialog = true"/>
 
 
-                <v-btn text="Create" variant="flat" :disabled="!postActive" color="primary"/>
+                <v-btn text="Create" variant="flat" :disabled="!postActive" color="primary" @click="handleCreate" :loading="form.processing"/>
             </v-card-actions>
         </v-card>
     </v-dialog>
@@ -165,11 +184,11 @@ watch(form, (newVal) => {
         <Card
             :title="form.title"
             :content="form.content"
-            :username="fake.username"
-            :avatar="fake.avatar"
+            :username="page.props.auth.user.name"
+            :avatar="page.props.auth.user.id"
             :image="form.imagePreview"
             :tags="form.tags"
-            :publish_at="fake.publish_at"
+            published_at="Not Published"
         />
     </v-dialog>
 </template>

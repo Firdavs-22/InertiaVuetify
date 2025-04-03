@@ -3,17 +3,10 @@ import Card from "@/components/Card.vue";
 import CreateDialog from "@/Pages/Posts/CreateDialog.vue";
 import {ref} from "vue";
 
-const card = {
-    title: "Title",
-    content: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-    user: {
-        name: "Test",
-        image: "https://vuetifyjs.b-cdn.net/images/john-smirk.png",
-    },
-    image: "https://vuetifyjs.b-cdn.net/docs/images/one/snips/backgrounds/landscape06.png",
-    tags: ["Hello", "Lorem", "Test", "one", "to", "gg"],
-    publish_at: "1 hour ago",
-}
+defineProps({
+    posts: Array
+})
+
 
 const dialog = ref(false);
 </script>
@@ -27,22 +20,22 @@ const dialog = ref(false);
             @click="dialog = true"
         />
     </div>
-    <v-row style="max-height: 45em; overflow-y: auto;" >
+    <v-row style="max-height: 45em; overflow-y: auto;">
         <v-col
-            v-for="index in 20"
-            :key="index"
+            v-for="post in posts.data"
+            :key="post.id"
             sm="6"
             md="4"
             cols="12"
         >
             <Card
-                :title="card.title"
-                :content="card.content"
-                :username="card.user.name"
-                :avatar="card.user.image"
-                :image="card.image"
-                :tags="card.tags"
-                :publish_at="card.publish_at"
+                :title="post.title"
+                :content="post.content"
+                :username="post.user.name"
+                :avatar="post.user.id"
+                :image="'images/'+post.image"
+                :tags="post.tags"
+                :published_at="post.published_at"
             />
         </v-col>
     </v-row>
