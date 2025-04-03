@@ -24,7 +24,7 @@ const props = defineProps({
             :image="avatar"
             size="85"
             border="lg"
-            class="mt-n13"
+            class="mt-n13 ma-auto"
         />
         <v-card-item>
             <v-card-subtitle class="py-0">@{{ username }}</v-card-subtitle>
@@ -49,5 +49,3 @@ const props = defineProps({
         </v-card-item>
     </v-card>
 </template>
-<script setup lang="ts">
-</script>

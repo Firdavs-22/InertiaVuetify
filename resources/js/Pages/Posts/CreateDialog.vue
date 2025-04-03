@@ -1,5 +1,7 @@
 <script setup>
-import { nextTick, ref, watch } from 'vue'
+import {nextTick, ref, watch} from 'vue'
+import Card from "@/components/Card.vue";
+import {useForm} from "@inertiajs/vue3";
 
 const props = defineProps({
     dialog: Boolean,
@@ -7,14 +9,44 @@ const props = defineProps({
 
 defineEmits(["closeDialog"]);
 
+const form = useForm({
+    title: '',
+    content: '',
+    tags: [],
+    image: null,
+    imagePreview: null,
+})
+
+const fake = {
+    username: 'Test',
+    avatar: 'https://vuetifyjs.b-cdn.net/images/john-smirk.png',
+    publish_at: 'Not Published',
+}
 
 const items = ['Gaming', 'Programming', 'Vue', 'Vuetify']
-const model = ref(['Vuetify'])
 const search = ref(null)
+const previewDialog = ref(false)
+const postActive = ref(false)
 
-watch(model, newTags => {
+const rules = [
+    value => {
+        if (value && value.size < (10 * 1_000_000)) {
+            new Promise((resolve) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                    form.imagePreview = reader.result
+                    resolve(true)
+                }
+                reader.readAsDataURL(value)
+            })
+        }
+        return !value || value.size < (10 * 1_000_000) || 'File size should be less than 10MB!'
+    }
+]
+
+watch(() => form.tags, newTags => {
     if (newTags.length > 5) {
-        nextTick(() => model.value.pop())
+        nextTick(() => form.tags.pop())
         return
     }
 
@@ -24,10 +56,14 @@ watch(model, newTags => {
         const isValid = lastTag.length > 2 && lastTag.length <= 15 && !/\s/.test(lastTag)
 
         if (!isValid) {
-            nextTick(() => model.value.pop())
+            nextTick(() => form.tags.pop())
         }
     }
 })
+
+watch(form, (newVal) => {
+        postActive.value = !!(newVal.imagePreview && newVal.title && newVal.content && newVal.tags.length > 0);
+    })
 </script>
 
 <template>
@@ -47,7 +83,9 @@ watch(model, newTags => {
                             label="Title"
                             placeholder="Enter the post title"
                             variant="outlined"
-                            hide-details/>
+                            hide-details
+                            v-model="form.title"
+                        />
                     </v-col>
 
                     <v-col cols="12">
@@ -56,16 +94,18 @@ watch(model, newTags => {
                             placeholder="Enter the post description"
                             variant="outlined"
                             rows="3"
-                            hide-details/>
+                            hide-details
+                            v-model="form.content"
+                        />
                     </v-col>
 
-                    <v-col cols="12">
+                    <v-col cols="12" md="6">
                         <v-combobox
-                            v-model="model"
+                            v-model="form.tags"
                             v-model:search="search"
                             :hide-no-data="false"
                             :items="items"
-                            hint="Maximum of 5 tags"
+                            hint="Maximum of 5 tags, Minimum of 1 tag"
                             label="Add some tags"
                             chips
                             variant="outlined"
@@ -78,11 +118,25 @@ watch(model, newTags => {
                             <template v-slot:no-data>
                                 <v-list-item>
                                     <v-list-item-title>
-                                        No results matching "<strong>{{ search }}</strong>". Press <kbd>enter</kbd> to create a new one
+                                        No results matching "<strong>{{ search }}</strong>". Press <kbd>enter</kbd> to
+                                        create a new one
                                     </v-list-item-title>
                                 </v-list-item>
                             </template>
                         </v-combobox>
+                    </v-col>
+
+                    <v-col cols="12" md="6">
+                        <v-file-input
+                            label="Upload a Image"
+                            variant="outlined"
+                            hint="Only image files are allowed (max 10MB)"
+                            persistent-hint
+                            clearable
+                            :rules="rules"
+                            accept="image/*"
+                            v-model="form.image"
+                        />
                     </v-col>
 
                 </v-row>
@@ -91,12 +145,31 @@ watch(model, newTags => {
             <v-divider/>
 
             <v-card-actions class="px-6 py-4">
-                <v-btn text="Cancel" variant="tonal" @click="$emit('closeDialog')"/>
+                <v-btn text="Cancel" variant="flat" color="blue-grey" @click="$emit('closeDialog')"/>
 
                 <v-spacer/>
 
-                <v-btn text="Create" variant="tonal" />
+                <v-btn text="preview" :disabled="!postActive" variant="flat" color="secondary" class="mr-2"
+                       @click="previewDialog = true"/>
+
+
+                <v-btn text="Create" variant="flat" :disabled="!postActive" color="primary"/>
             </v-card-actions>
         </v-card>
+    </v-dialog>
+
+    <v-dialog
+        v-model="previewDialog"
+        max-width="350"
+    >
+        <Card
+            :title="form.title"
+            :content="form.content"
+            :username="fake.username"
+            :avatar="fake.avatar"
+            :image="form.imagePreview"
+            :tags="form.tags"
+            :publish_at="fake.publish_at"
+        />
     </v-dialog>
 </template>
