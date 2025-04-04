@@ -17,10 +17,12 @@ class PostController extends Controller
     public function index(): Response|ResponseFactory
     {
         return Inertia('Posts/Index', [
-            "posts" => fn () =>  PostResource::collection(Post::with(['tags',"user"])->latest()->simplePaginate(9)),
+            "posts" => PostResource::collection(Post::with(['tags',"user"])
+                ->latest()->paginate(9)),
             "tags" => Inertia::defer(function()  {;
                 return Tag::all(['name']);
             }),
+            "newPost" => null
         ]);
     }
 
@@ -62,7 +64,12 @@ class PostController extends Controller
         $tagIds = Tag::whereIn('name', $tagsNames)->pluck("id")->toArray();
 
         $post->tags()->sync($tagIds);
+        $post->load(['tags', 'user']);
 
-        return redirect()->route("posts.index")->with("success", "Post created successfully");
+        return Inertia('Posts/Index', [
+            "newPost" => PostResource::make($post),
+            "posts" =>  [],
+            "tags" =>  [],
+        ])->with("success", "Post created successfully");
     }
 }

@@ -1,8 +1,8 @@
 <script setup>
 import Card from "@/components/Card.vue";
 import CreateDialog from "@/Pages/Posts/CreateDialog.vue";
-import {nextTick, ref, watchEffect} from "vue";
-import {Deferred, router} from "@inertiajs/vue3";
+import {ref, watchEffect} from "vue";
+import {Deferred, WhenVisible} from "@inertiajs/vue3";
 
 const props = defineProps({
     posts: Object,
@@ -11,6 +11,8 @@ const props = defineProps({
 
 const isDataLoaded = ref(false);
 const dialog = ref(false);
+const posts = ref(props.posts.data);
+
 
 watchEffect(() => {
     if (props.tags) {
@@ -23,14 +25,10 @@ const handleOpenDialog = () => dialog.value = true
 
 const handleCloseDialog = () => dialog.value = false
 
-const reloadPosts = async () => {
-    console.log("reload posts")
-    handleCloseDialog()
-    await nextTick()
-    router.reload({
-        only: ['posts'],
-    })
+const addPost = (newPost) => {
+    posts.value = [newPost, ...posts.value]
 }
+
 
 </script>
 
@@ -44,9 +42,9 @@ const reloadPosts = async () => {
             :loading="!isDataLoaded"
         />
     </div>
-    <v-row style="max-height: 45em; overflow-y: auto;">
+    <v-row ref="scrollContainer" style="max-height: 45em; overflow-y: auto;">
         <v-col
-            v-for="post in posts.data"
+            v-for="post in posts"
             :key="post.id"
             sm="6"
             md="4"
@@ -62,9 +60,28 @@ const reloadPosts = async () => {
                 :published_at="post.published_at"
             />
         </v-col>
+
+        <WhenVisible
+            v-if="props.posts.meta.current_page < props.posts.meta.last_page"
+            always
+            :params="{
+                data: {page: props.posts.meta.current_page + 1},
+                only: ['posts'],
+                preserveState: true,
+                preserveScroll: true,
+                preserveUrl: true,
+                onSuccess: (data) => {
+                    const newItems = data.props.posts.data
+                        .filter(newItem => !posts.some(post => post.id === newItem.id))
+                    if (newItems.length) posts.push(...newItems)
+
+                }
+            }"
+        >
+        </WhenVisible>
     </v-row>
     <Deferred data="tags">
         <template #fallback/>
-        <CreateDialog :dialog="dialog" @closeDialog="handleCloseDialog" :tags="tags" @reloadPosts="reloadPosts"/>
+        <CreateDialog :dialog="dialog" @closeDialog="handleCloseDialog" :tags="tags" @addPost="addPost"/>
     </Deferred>
 </template>

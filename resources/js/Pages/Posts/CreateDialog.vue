@@ -8,7 +8,7 @@ const props = defineProps({
     tags: Array,
 });
 
-const emits = defineEmits(["closeDialog","reloadPosts"]);
+const emits = defineEmits(["closeDialog","addPost"]);
 
 const form = useForm({
     title: '',
@@ -72,9 +72,12 @@ const handleCreate = () => {
         })
         form.post("posts",{
             forceFormData: true,
-            onSuccess: () => {
+            preserveState: true,
+            replace: true,
+            only: ['newPost'],
+            onSuccess: (data) => {
                 closeDialog()
-                emits("reloadPosts")
+                emits('addPost', data.props.newPost.data)
                 form.reset()
                 form.imagePreview = null
                 form.image = null
