@@ -1,4 +1,14 @@
 <template>
+    <v-text-field
+        v-model="searchQuery"
+        label="Search posts"
+        prepend-inner-icon="mdi-magnify"
+        class="mb-4"
+        density="comfortable"
+        clearable
+        @update:modelValue="performSearch"
+    />
+
     <v-data-table
         :headers="headers"
         :items="postList"
@@ -7,8 +17,29 @@
         hide-default-footer
         :loading="loading"
         class="rounded-lg"
-
     >
+        <template v-slot:header.title="{column}">
+            <th :align="column.align">
+                <SortableHeader
+                    label="Title"
+                    sort-by="title"
+                    :current-sort="sort"
+                    @sort="handleSort"
+                />
+            </th>
+        </template>
+
+        <template v-slot:header.published_at="{ column }">
+            <th :align="column.align">
+                <SortableHeader
+                    label="Published At"
+                    sort-by="published_at"
+                    :current-sort="sort"
+                    @sort="handleSort"
+                />
+            </th>
+        </template>
+
         <template v-slot:item.title="{value}">
             <div class="text-wrap truncate-multiline" style="max-width: 300px;">
                 {{ value }}
@@ -104,7 +135,6 @@
             </tr>
         </template>
 
-
         <template v-slot:loading>
             <v-skeleton-loader type="table-row@11"/>
         </template>
@@ -122,7 +152,7 @@
             <Link
                 as="button"
                 :disabled="props.disabled || loading"
-                :data="{ page: currentPage - 1 }"
+                :url="getPaginationData(currentPage - 1)"
                 preserve-state
                 preserve-scroll
                 @start="loading = true"
@@ -140,9 +170,7 @@
             <Link
                 :disabled="isActive"
                 as="button"
-                :data="{
-                    page: page
-                }"
+                :url="getPaginationData(page)"
                 :active="isActive"
                 preserve-state
                 preserve-scroll
@@ -164,7 +192,7 @@
             <Link
                 as="button"
                 :disabled="props.disabled || loading"
-                :data="{ page: currentPage + 1 }"
+                :url="getPaginationData(currentPage + 1)"
                 preserve-state
                 preserve-scroll
                 @start="loading = true"
@@ -181,35 +209,84 @@
 </template>
 
 <script setup>
-import {Link} from "@inertiajs/vue3";
+import {Link, router } from "@inertiajs/vue3";
 import {getAvatar} from "@/utlis/avatar.js";
 import {ref, watch} from "vue";
+import SortableHeader from "@/Pages/Posts/SortableHeader.vue";
 
 const headers = [
-    {title: 'Title', key: 'title', align: 'start'},
-    {title: 'Content', key: 'content'},
-    {title: 'Username', key: 'user'},
-    {title: 'Published_at', key: 'published_at', align: 'end'},
-    {title: 'Tags', key: 'tags', align: 'end'},
-]
+    { title: 'Title', key: 'title', align: 'start', sortable: false },
+    { title: 'Content', key: 'content',sortable: false },
+    { title: 'Username', key: 'user', sortable: false },
+    { title: 'Published At', key: 'published_at', align: 'end', sortable: false },
+    { title: 'Tags', key: 'tags', align: 'end' , sortable: false},
+];
+
 
 
 const props = defineProps({
     posts: Object,
     pagination: Object,
+    sort: Object,
+    search: String,
+    currentPath: String
 })
 
 const currentPage = ref(props.pagination.currentPage)
 const lastPage = ref(props.pagination.lastPage)
 const loading = ref(false);
 const postList = ref(props.posts.data)
+const currentPath = ref(props.currentPath || window.location.pathname);
 
+const searchQuery = ref(props.search);
+const debounceTimeout = ref(null);
+const handleSort = (newSort) => {
+    const params = new URLSearchParams({
+        ...Object.fromEntries(new URLSearchParams(window.location.search)),
+        sort_by: newSort.key,
+        sort_direction: newSort.direction,
+        page: 1,
+    });
+
+    router.get(`${currentPath.value}?${params.toString()}`);
+};
+
+const performSearch = () => {
+    clearTimeout(debounceTimeout.value);
+    debounceTimeout.value = setTimeout(() => {
+        const params = new URLSearchParams({
+            ...Object.fromEntries(new URLSearchParams(window.location.search)),
+            search: searchQuery.value,
+            page: 1,
+        });
+
+        router.get(`${currentPath.value}?${params.toString()}`);
+    }, 300);
+};
+
+const getPaginationData = (page) => {
+    const params = new URLSearchParams({
+        page: page,
+        // Preserve existing filters from props
+        ...(props.sort.by && { sort_by: props.sort.by }),
+        ...(props.sort.direction && { sort_direction: props.sort.direction }),
+        ...(props.search && { search: props.search }),
+    });
+
+    // Convert to string and remove empty params
+    const paramString = params.toString().replace(/(^|&)[^&=]*=(?=&|$)/g, '');
+
+    return `${currentPath.value}${paramString ? `?${paramString}` : ''}`;
+}
 
 watch(() => props.pagination.currentPage, (newVal) => {
     currentPage.value = newVal;
 });
 watch(() => props.posts.data, (newVal) => {
     postList.value = [...newVal];
+});
+watch(() => props.pagination.lastPage, (newVal) => {
+    lastPage.value = newVal;
 });
 </script>
 

@@ -18,9 +18,10 @@ class PostController extends Controller
     public function infiniteScroll(): Response|ResponseFactory
     {
         return Inertia('Posts/InfiniteScroll', [
-            "posts" => PostResource::collection(Post::with(['tags',"user"])
+            "posts" => PostResource::collection(Post::with(['tags', "user"])
                 ->latest()->paginate(9)),
-            "tags" => Inertia::defer(function()  {;
+            "tags" => Inertia::defer(function () {
+                ;
                 return Tag::all(['name']);
             }),
             "newPost" => null
@@ -34,13 +35,13 @@ class PostController extends Controller
             "content" => ['required', 'string', 'max:1000'],
             "tags" => ['required', 'array', 'max:5', 'distinct', 'min:1'],
             "tags.*" => ['string', 'min:3', 'max:15'],
-            "image" => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg',File::image()->max("10MB")],
+            "image" => ['required', 'image', 'mimes:jpeg,png,jpg,gif,svg', File::image()->max("10MB")],
         ]);
 
         $imageName = time() . '.' . Str::uuid();
         if ($request->hasFile('image')) {
             $image = $request->file('image');
-            $imageName = $imageName.'.' . $image->getClientOriginalExtension();
+            $imageName = $imageName . '.' . $image->getClientOriginalExtension();
             $image->move(public_path('images'), $imageName);
         } else {
             return back()->withErrors(["image" => "Invalid image"])->onlyInput("image");
@@ -69,21 +70,51 @@ class PostController extends Controller
 
         return Inertia('Posts/InfiniteScroll', [
             "newPost" => PostResource::make($post),
-            "posts" =>  [],
-            "tags" =>  [],
+            "posts" => [],
+            "tags" => [],
         ])->with("success", "Post created successfully");
     }
 
-    public function index()
+    public function index(Request $request): Response|ResponseFactory
     {
-        $posts = Post::with(['tags', 'user'])->latest()->paginate(10);
+        $validSortColumns = ['title', 'published_at'];
+        $sortBy = in_array($request->input('sort_by'), $validSortColumns)
+            ? $request->input('sort_by') : "published_at";
 
-        return Inertia("Posts/Index",[
+        $sortDirection = in_array(strtolower($request->input('sort_direction')), ['asc', 'desc'])
+            ? strtolower($request->input('sort_direction')) : "desc";
+
+        $search = $request->input('search', '');
+
+        $postQuery = Post::query(['tags', 'user'])->orderBy($sortBy, $sortDirection);
+
+        if (!empty($search)) {
+            $keywords = array_filter(array_map('trim', explode(' ', $search)));
+            if (!empty($keywords)) {
+                $postQuery->where(function ($query) use ($keywords) {
+                    foreach ($keywords as $keyword) {
+                        $query->orWhere('title', 'like', "%$keyword%")
+                            ->orWhere('content', 'like', "%$keyword%");
+                    }
+                });
+            }
+        }
+
+
+        $posts = $postQuery->paginate(10);
+
+        return Inertia("Posts/Index", [
             "posts" => PostResource::collection($posts->items()),
             "pagination" => [
                 "currentPage" => $posts->currentPage(),
                 "lastPage" => $posts->lastPage(),
-            ]
+            ],
+            "sort" => [
+                "by" => $sortBy,
+                "direction" => $sortDirection,
+            ],
+            "search" => $search,
+            "currentPath" => $request->path(),
         ]);
     }
 }
