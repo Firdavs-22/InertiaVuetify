@@ -1,87 +1,223 @@
+<template>
+    <v-data-table
+        :headers="headers"
+        :items="postList"
+        item-value="id"
+        show-expand
+        hide-default-footer
+        :loading="loading"
+        class="rounded-lg"
+
+    >
+        <template v-slot:item.title="{value}">
+            <div class="text-wrap truncate-multiline" style="max-width: 300px;">
+                {{ value }}
+                <v-tooltip location="top" activator="parent" max-width="1000" eager :text="value"/>
+            </div>
+        </template>
+
+        <template v-slot:item.content="{value}">
+            <div class="text-wrap truncate-multiline" style="max-width: 300px;">
+                {{ value }}
+            </div>
+        </template>
+
+        <template v-slot:item.user="{value}">
+            <div class="d-flex flex-column align-center mt-1">
+                <v-avatar :color="getAvatar(value.id).color" :icon="getAvatar(value.id).icon" size="32"/>
+                <span>
+                  {{ value.name }}
+                </span>
+            </div>
+        </template>
+
+        <template v-slot:item.tags="{value}">
+            <v-chip-group column>
+                <v-chip
+                    v-for="tag in value.slice(0,3)"
+                    :key="tag.id"
+                    class="ma-1"
+                    color="primary"
+                    text-color="white"
+                    size="small"
+                    :text="'#'+tag.name"
+                />
+                <v-chip variant="text" text="..." v-if="value.length > 3" disabled/>
+            </v-chip-group>
+        </template>
+
+        <template v-slot:item.data-table-expand="{ internalItem, isExpanded, toggleExpand }">
+            <v-btn
+                :append-icon="isExpanded(internalItem) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                :text="isExpanded(internalItem) ? 'Collapse' : 'More info'"
+                class="text-none"
+                color="medium-emphasis"
+                size="small"
+                variant="text"
+                border
+                slim
+                @click="toggleExpand(internalItem)"
+            />
+        </template>
+
+        <template v-slot:expanded-row="{ columns, item }">
+            <tr>
+                <td :colspan="columns.length" class="py-2">
+                    <v-sheet rounded="lg" border>
+                        <v-table density="compact">
+                            <thead class="bg-surface-light">
+                            <tr>
+                                <th>Image</th>
+                                <th>Content</th>
+                                <th>Tags</th>
+                            </tr>
+                            </thead>
+
+                            <tbody>
+                            <tr>
+                                <td>
+                                    <v-img
+                                        width="300"
+                                        :src="'/images/'+item.image"
+                                        class="ma-1"
+                                    />
+                                </td>
+                                <td class="py-2">{{ item.content }}</td>
+                                <td>
+                                    <v-chip-group column>
+                                        <v-chip
+                                            v-for="tag in item.tags"
+                                            :key="tag.id"
+                                            class="ma-1"
+                                            color="primary"
+                                            text-color="white"
+                                            size="small"
+                                            :text="'#'+tag.name"
+                                        />
+                                    </v-chip-group>
+                                </td>
+                            </tr>
+                            </tbody>
+                        </v-table>
+                    </v-sheet>
+                </td>
+            </tr>
+        </template>
+
+
+        <template v-slot:loading>
+            <v-skeleton-loader type="table-row@11"/>
+        </template>
+    </v-data-table>
+
+
+    <v-pagination
+        v-model="currentPage"
+        total-visible="8"
+        :length="lastPage"
+        class="mt-4"
+        :disabled="loading"
+    >
+        <template v-slot:prev="props">
+            <Link
+                as="button"
+                :disabled="props.disabled || loading"
+                :data="{ page: currentPage - 1 }"
+                preserve-state
+                preserve-scroll
+                @start="loading = true"
+                @finish="loading = false"
+            >
+                <v-btn
+                    :disabled="props.disabled || loading"
+                    icon="mdi-chevron-left"
+                    variant="text"
+                />
+            </Link>
+        </template>
+
+        <template v-slot:item="{page, isActive}">
+            <Link
+                :disabled="isActive"
+                as="button"
+                :data="{
+                    page: page
+                }"
+                :active="isActive"
+                preserve-state
+                preserve-scroll
+                @start="loading = true"
+                @finish="loading = false"
+                @cancel="loading = false"
+            >
+                <v-btn
+                    :disabled="isActive || loading"
+                    :active="isActive"
+                    :variant="isActive ? 'flat' : 'text'"
+                    :color="isActive ? 'primary' : undefined"
+                    :text="page"
+                />
+            </Link>
+        </template>
+
+        <template v-slot:next="props">
+            <Link
+                as="button"
+                :disabled="props.disabled || loading"
+                :data="{ page: currentPage + 1 }"
+                preserve-state
+                preserve-scroll
+                @start="loading = true"
+                @finish="loading = false"
+            >
+                <v-btn
+                    :disabled="props.disabled || loading"
+                    icon="mdi-chevron-right"
+                    variant="text"
+                />
+            </Link>
+        </template>
+    </v-pagination>
+</template>
+
 <script setup>
-import Card from "@/components/Card.vue";
-import CreateDialog from "@/Pages/Posts/CreateDialog.vue";
-import {ref, watchEffect} from "vue";
-import {Deferred, WhenVisible} from "@inertiajs/vue3";
+import {Link} from "@inertiajs/vue3";
+import {getAvatar} from "@/utlis/avatar.js";
+import {ref, watch} from "vue";
+
+const headers = [
+    {title: 'Title', key: 'title', align: 'start'},
+    {title: 'Content', key: 'content'},
+    {title: 'Username', key: 'user'},
+    {title: 'Published_at', key: 'published_at', align: 'end'},
+    {title: 'Tags', key: 'tags', align: 'end'},
+]
+
 
 const props = defineProps({
     posts: Object,
-    tags: Array,
+    pagination: Object,
 })
 
-const isDataLoaded = ref(false);
-const dialog = ref(false);
-const posts = ref(props.posts.data);
+const currentPage = ref(props.pagination.currentPage)
+const lastPage = ref(props.pagination.lastPage)
+const loading = ref(false);
+const postList = ref(props.posts.data)
 
 
-watchEffect(() => {
-    if (props.tags) {
-        isDataLoaded.value = true
-        dialog.value = false
-    }
-})
-
-const handleOpenDialog = () => dialog.value = true
-
-const handleCloseDialog = () => dialog.value = false
-
-const addPost = (newPost) => {
-    posts.value = [newPost, ...posts.value]
-}
-
-
+watch(() => props.pagination.currentPage, (newVal) => {
+    currentPage.value = newVal;
+});
+watch(() => props.posts.data, (newVal) => {
+    postList.value = [...newVal];
+});
 </script>
 
-<template>
-    <div class="d-flex justify-space-between align-center mb-4">
-        <span class="text-h4">The Post List</span>
-        <v-btn
-            color="primary"
-            text="create post"
-            @click="handleOpenDialog"
-            :loading="!isDataLoaded"
-        />
-    </div>
-    <v-row ref="scrollContainer" style="max-height: 45em; overflow-y: auto;">
-        <v-col
-            v-for="post in posts"
-            :key="post.id"
-            sm="6"
-            md="4"
-            cols="12"
-        >
-            <Card
-                :title="post.title"
-                :content="post.content"
-                :username="post.user.name"
-                :avatar="post.user.id"
-                :image="'/images/'+post.image"
-                :tags="post.tags"
-                :published_at="post.published_at"
-            />
-        </v-col>
-
-        <WhenVisible
-            v-if="props.posts.meta.current_page < props.posts.meta.last_page"
-            always
-            :params="{
-                data: {page: props.posts.meta.current_page + 1},
-                only: ['posts'],
-                preserveState: true,
-                preserveScroll: true,
-                preserveUrl: true,
-                onSuccess: (data) => {
-                    const newItems = data.props.posts.data
-                        .filter(newItem => !posts.some(post => post.id === newItem.id))
-                    if (newItems.length) posts.push(...newItems)
-
-                }
-            }"
-        >
-        </WhenVisible>
-    </v-row>
-    <Deferred data="tags">
-        <template #fallback/>
-        <CreateDialog :dialog="dialog" @closeDialog="handleCloseDialog" :tags="tags" @addPost="addPost"/>
-    </Deferred>
-</template>
+<style scoped>
+.truncate-multiline {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+</style>

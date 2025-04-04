@@ -17,7 +17,7 @@ class PostController extends Controller
 {
     public function infiniteScroll(): Response|ResponseFactory
     {
-        return Inertia('Posts/Index', [
+        return Inertia('Posts/InfiniteScroll', [
             "posts" => PostResource::collection(Post::with(['tags',"user"])
                 ->latest()->paginate(9)),
             "tags" => Inertia::defer(function()  {;
@@ -67,7 +67,7 @@ class PostController extends Controller
         $post->tags()->sync($tagIds);
         $post->load(['tags', 'user']);
 
-        return Inertia('Posts/Index', [
+        return Inertia('Posts/InfiniteScroll', [
             "newPost" => PostResource::make($post),
             "posts" =>  [],
             "tags" =>  [],
@@ -76,6 +76,14 @@ class PostController extends Controller
 
     public function index()
     {
-        return Inertia("About");
+        $posts = Post::with(['tags', 'user'])->latest()->paginate(10);
+
+        return Inertia("Posts/Index",[
+            "posts" => PostResource::collection($posts->items()),
+            "pagination" => [
+                "currentPage" => $posts->currentPage(),
+                "lastPage" => $posts->lastPage(),
+            ]
+        ]);
     }
 }

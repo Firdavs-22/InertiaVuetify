@@ -70,7 +70,7 @@ const handleCreate = () => {
             const { imagePreview, ...rest } = data
             return rest
         })
-        form.post("posts",{
+        form.post("/posts",{
             forceFormData: true,
             preserveState: true,
             replace: true,
