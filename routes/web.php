@@ -10,8 +10,10 @@ Route::middleware("auth")->group(function () {
     Route::inertia("/about", "About")->name("about");
     Route::post("/logout", [AuthController::class, "logout"])->name("logout");
 
-    Route::get("/posts", [PostController::class, "index"])->name("posts.index");
+    Route::get("/posts/beta", [PostController::class, "infiniteScroll"])->name("posts.beta");
     Route::post("/posts", [PostController::class, "store"])->name("posts.store");
+
+    Route::get("/posts", [PostController::class, "index"])->name("posts.index");
 });
 
 Route::middleware("guest")->group(function () {

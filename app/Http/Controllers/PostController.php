@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Http\Resources\PostResource;
 use App\Models\Post;
 use App\Models\Tag;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\File;
@@ -14,7 +15,7 @@ use Inertia\ResponseFactory;
 
 class PostController extends Controller
 {
-    public function index(): Response|ResponseFactory
+    public function infiniteScroll(): Response|ResponseFactory
     {
         return Inertia('Posts/Index', [
             "posts" => PostResource::collection(Post::with(['tags',"user"])
@@ -26,7 +27,7 @@ class PostController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request): Response|ResponseFactory|RedirectResponse
     {
         $validated = $request->validate([
             "title" => ['required', 'string', 'max:255'],
@@ -71,5 +72,10 @@ class PostController extends Controller
             "posts" =>  [],
             "tags" =>  [],
         ])->with("success", "Post created successfully");
+    }
+
+    public function index()
+    {
+        return Inertia("About");
     }
 }

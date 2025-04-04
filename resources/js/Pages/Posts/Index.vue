@@ -55,7 +55,7 @@ const addPost = (newPost) => {
                 :content="post.content"
                 :username="post.user.name"
                 :avatar="post.user.id"
-                :image="'images/'+post.image"
+                :image="'/images/'+post.image"
                 :tags="post.tags"
                 :published_at="post.published_at"
             />
