@@ -56,11 +56,11 @@ const {icon, color} = getAvatar(props.avatar)
                     class="text-medium-emphasis"
                 >
                     <v-chip
-                        v-for="tag in tags"
-                        :key="tag.id"
+                        v-for="(tag, index) in tags"
+                        :key="tag.id ?? index"
                         density="compact"
                         size="small"
-                        :text="'#'+tag.name"
+                        :text="'#'+(tag.name ?? tag)"
                     />
                 </v-chip-group>
             </div>
