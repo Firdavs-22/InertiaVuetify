@@ -152,7 +152,7 @@
             <Link
                 as="button"
                 :disabled="props.disabled || loading"
-                :url="getPaginationData(currentPage - 1)"
+                :href="getPaginationData(currentPage - 1)"
                 preserve-state
                 preserve-scroll
                 @start="loading = true"
@@ -170,7 +170,7 @@
             <Link
                 :disabled="isActive"
                 as="button"
-                :url="getPaginationData(page)"
+                :href="getPaginationData(page)"
                 :active="isActive"
                 preserve-state
                 preserve-scroll
@@ -192,7 +192,7 @@
             <Link
                 as="button"
                 :disabled="props.disabled || loading"
-                :url="getPaginationData(currentPage + 1)"
+                :href="getPaginationData(currentPage + 1)"
                 preserve-state
                 preserve-scroll
                 @start="loading = true"
