@@ -10,10 +10,14 @@ Route::middleware("auth")->group(function () {
     Route::inertia("/about", "About")->name("about");
     Route::post("/logout", [AuthController::class, "logout"])->name("logout");
 
-    Route::get("/posts/beta", [PostController::class, "infiniteScroll"])->name("posts.beta");
-    Route::post("/posts", [PostController::class, "store"])->name("posts.store");
 
-    Route::get("/posts", [PostController::class, "index"])->name("posts.index");
+    Route::prefix("/posts")->controller(PostController::class)->group(function () {
+        Route::get("/", "index")->name("posts.index");
+        Route::get("/beta", "infiniteScroll")->name("posts.beta");
+
+        Route::get("/create", "create")->name("posts.create");
+        Route::post("/", "store")->name("posts.store");
+    });
 });
 
 Route::middleware("guest")->group(function () {

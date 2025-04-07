@@ -21,7 +21,6 @@ class PostController extends Controller
             "posts" => PostResource::collection(Post::with(['tags', "user"])
                 ->latest()->paginate(9)),
             "tags" => Inertia::defer(function () {
-                ;
                 return Tag::all(['name']);
             }),
             "newPost" => null
@@ -115,6 +114,13 @@ class PostController extends Controller
             ],
             "search" => $search,
             "currentPath" => $request->path(),
+        ]);
+    }
+
+    public function create(): Response|ResponseFactory
+    {
+        return Inertia("Posts/Create", [
+            "tags" => fn() => Tag::all(['name'])->map(fn ($tag) => $tag->name),
         ]);
     }
 }

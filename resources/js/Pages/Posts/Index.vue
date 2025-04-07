@@ -7,7 +7,6 @@
             show-expand
             hide-default-footer
             :loading="loading"
-            class="rounded-lg"
         >
             <template v-slot:top>
                 <v-toolbar flat>
@@ -20,18 +19,30 @@
                         v-model="searchQuery"
                         label="Search posts"
                         prepend-inner-icon="mdi-magnify"
-                        class="me-2"
-                        density="comfortable"
-                        variant="outlined"
+                        class="ma-2"
+                        density="compact"
+                        variant="solo"
+                        flat
+                        single-line
                         hide-details
                         clearable
                         @update:modelValue="performSearch"
                     />
+
+                    <Link href="/posts/create" class="text-decoration-none text-high-emphasis">
+                        <v-btn
+                            class="me-2 ml-3"
+                            prepend-icon="mdi-plus"
+                            rounded="lg"
+                            text="Add a Post"
+                            border
+                        />
+                    </Link>
                 </v-toolbar>
             </template>
 
             <template v-slot:bottom>
-                <v-divider />
+                <v-divider/>
                 <v-pagination
                     v-model="currentPage"
                     total-visible="8"
@@ -102,14 +113,12 @@
             </template>
 
             <template v-slot:header.title="{column}">
-                <th :align="column.align">
-                    <SortableHeader
-                        label="Title"
-                        sort-by="title"
-                        :current-sort="sort"
-                        @sort="handleSort"
-                    />
-                </th>
+                <SortableHeader
+                    label="Title"
+                    sort-by="title"
+                    :current-sort="sort"
+                    z @sort="handleSort"
+                />
             </template>
 
             <template v-slot:header.published_at="{ column }">
@@ -236,7 +245,6 @@ const headers = [
     {title: 'Published At', key: 'published_at', sortable: false},
     {title: 'Tags', key: 'tags', align: 'start', sortable: false},
 ];
-
 
 const props = defineProps({
     posts: Object,
