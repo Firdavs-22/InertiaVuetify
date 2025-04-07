@@ -161,6 +161,7 @@
                 <v-btn
                     :disabled="props.disabled || loading"
                     icon="mdi-chevron-left"
+                    density="comfortable"
                     variant="text"
                 />
             </Link>
@@ -202,6 +203,7 @@
                     :disabled="props.disabled || loading"
                     icon="mdi-chevron-right"
                     variant="text"
+                    density="comfortable"
                 />
             </Link>
         </template>
