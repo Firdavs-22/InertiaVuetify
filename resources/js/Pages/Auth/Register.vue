@@ -11,7 +11,11 @@ const form = useForm({
 
 const submit = () => {
     form.post('register',{
-        preserveScroll: true
+        preserveScroll: true,
+        onError: () =>{
+            form.reset('password');
+            form.reset('password_confirmation');
+        }
     });
 };
 

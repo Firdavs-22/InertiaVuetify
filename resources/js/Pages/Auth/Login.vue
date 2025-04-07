@@ -8,9 +8,11 @@ const form = useForm({
 });
 
 const submit = () => {
-    console.log(form)
     form.post('login',{
-        preserveScroll: true
+        preserveScroll: true,
+        onError: () => {
+            form.reset("password")
+        },
     });
 };
 
