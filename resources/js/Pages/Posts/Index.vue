@@ -1,211 +1,226 @@
 <template>
-    <v-text-field
-        v-model="searchQuery"
-        label="Search posts"
-        prepend-inner-icon="mdi-magnify"
-        class="mb-4"
-        density="comfortable"
-        clearable
-        @update:modelValue="performSearch"
-    />
+    <v-sheet border rounded>
+        <v-data-table
+            :headers="headers"
+            :items="postList"
+            item-value="id"
+            show-expand
+            hide-default-footer
+            :loading="loading"
+            class="rounded-lg"
+        >
+            <template v-slot:top>
+                <v-toolbar flat>
+                    <v-toolbar-title>
+                        <v-icon color="medium-emphasis" icon="mdi-post" start size="x-small"/>
+                        Posts
+                    </v-toolbar-title>
 
-    <v-data-table
-        :headers="headers"
-        :items="postList"
-        item-value="id"
-        show-expand
-        hide-default-footer
-        :loading="loading"
-        class="rounded-lg"
-    >
-        <template v-slot:header.title="{column}">
-            <th :align="column.align">
+                    <v-text-field
+                        v-model="searchQuery"
+                        label="Search posts"
+                        prepend-inner-icon="mdi-magnify"
+                        class="me-2"
+                        density="comfortable"
+                        variant="outlined"
+                        hide-details
+                        clearable
+                        @update:modelValue="performSearch"
+                    />
+                </v-toolbar>
+            </template>
+
+            <template v-slot:bottom>
+                <v-divider />
+                <v-pagination
+                    v-model="currentPage"
+                    total-visible="8"
+                    :length="lastPage"
+                    class="my-2"
+                    :disabled="loading"
+                >
+                    <template v-slot:prev="props">
+                        <Link
+                            as="button"
+                            :disabled="props.disabled || loading"
+                            :href="getPaginationData(currentPage - 1)"
+                            preserve-state
+                            preserve-scroll
+                            @start="loading = true"
+                            @finish="loading = false"
+                        >
+                            <v-btn
+                                :disabled="props.disabled || loading"
+                                icon="mdi-chevron-left"
+                                density="comfortable"
+                                variant="text"
+                            />
+                        </Link>
+                    </template>
+
+                    <template v-slot:item="{page, isActive}">
+                        <Link
+                            :disabled="isActive"
+                            as="button"
+                            :href="getPaginationData(page)"
+                            :active="isActive"
+                            preserve-state
+                            preserve-scroll
+                            @start="loading = true"
+                            @finish="loading = false"
+                            @cancel="loading = false"
+                        >
+                            <v-btn
+                                :disabled="isActive || loading"
+                                :active="isActive"
+                                :variant="isActive ? 'flat' : 'text'"
+                                :color="isActive ? 'primary' : undefined"
+                                :text="page"
+                            />
+                        </Link>
+                    </template>
+
+                    <template v-slot:next="props">
+                        <Link
+                            as="button"
+                            :disabled="props.disabled || loading"
+                            :href="getPaginationData(currentPage + 1)"
+                            preserve-state
+                            preserve-scroll
+                            @start="loading = true"
+                            @finish="loading = false"
+                        >
+                            <v-btn
+                                :disabled="props.disabled || loading"
+                                icon="mdi-chevron-right"
+                                variant="text"
+                                density="comfortable"
+                            />
+                        </Link>
+                    </template>
+                </v-pagination>
+            </template>
+
+            <template v-slot:header.title="{column}">
+                <th :align="column.align">
+                    <SortableHeader
+                        label="Title"
+                        sort-by="title"
+                        :current-sort="sort"
+                        @sort="handleSort"
+                    />
+                </th>
+            </template>
+
+            <template v-slot:header.published_at="{ column }">
                 <SortableHeader
-                    label="Title"
-                    sort-by="title"
+                    label="Published At"
+                    sort-by="published_at"
                     :current-sort="sort"
                     @sort="handleSort"
                 />
-            </th>
-        </template>
+            </template>
 
-        <template v-slot:header.published_at="{ column }">
-            <SortableHeader
-                label="Published At"
-                sort-by="published_at"
-                :current-sort="sort"
-                @sort="handleSort"
-            />
-        </template>
+            <template v-slot:item.title="{value}">
+                <div class="text-wrap truncate-multiline" style="max-width: 300px;">
+                    {{ value }}
+                    <v-tooltip location="top" activator="parent" max-width="1000" eager :text="value"/>
+                </div>
+            </template>
 
-        <template v-slot:item.title="{value}">
-            <div class="text-wrap truncate-multiline" style="max-width: 300px;">
-                {{ value }}
-                <v-tooltip location="top" activator="parent" max-width="1000" eager :text="value"/>
-            </div>
-        </template>
+            <template v-slot:item.content="{value}">
+                <div class="text-wrap truncate-multiline" style="max-width: 300px;">
+                    {{ value }}
+                </div>
+            </template>
 
-        <template v-slot:item.content="{value}">
-            <div class="text-wrap truncate-multiline" style="max-width: 300px;">
-                {{ value }}
-            </div>
-        </template>
-
-        <template v-slot:item.user="{value}">
-            <div class="d-flex flex-column align-center mt-1">
-                <v-avatar :color="getAvatar(value.id).color" :icon="getAvatar(value.id).icon" size="32"/>
-                <span>
+            <template v-slot:item.user="{value}">
+                <div class="d-flex flex-column align-center mt-1">
+                    <v-avatar :color="getAvatar(value.id).color" :icon="getAvatar(value.id).icon" size="32"/>
+                    <span>
                   {{ value.name }}
                 </span>
-            </div>
-        </template>
+                </div>
+            </template>
 
-        <template v-slot:item.tags="{value}">
-            <v-chip-group column>
-                <v-chip
-                    v-for="tag in value.slice(0,3)"
-                    :key="tag.id"
-                    class="ma-1"
-                    color="primary"
-                    text-color="white"
+            <template v-slot:item.tags="{value}">
+                <v-chip-group column>
+                    <v-chip
+                        v-for="tag in value.slice(0,3)"
+                        :key="tag.id"
+                        class="ma-1"
+                        color="primary"
+                        text-color="white"
+                        size="small"
+                        :text="'#'+tag.name"
+                    />
+                    <v-chip variant="text" text="..." v-if="value.length > 3" disabled/>
+                </v-chip-group>
+            </template>
+
+            <template v-slot:item.data-table-expand="{ internalItem, isExpanded, toggleExpand }">
+                <v-btn
+                    :append-icon="isExpanded(internalItem) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
+                    :text="isExpanded(internalItem) ? 'Collapse' : 'More info'"
+                    class="text-none"
+                    color="medium-emphasis"
                     size="small"
-                    :text="'#'+tag.name"
+                    variant="text"
+                    border
+                    slim
+                    @click="toggleExpand(internalItem)"
                 />
-                <v-chip variant="text" text="..." v-if="value.length > 3" disabled/>
-            </v-chip-group>
-        </template>
+            </template>
 
-        <template v-slot:item.data-table-expand="{ internalItem, isExpanded, toggleExpand }">
-            <v-btn
-                :append-icon="isExpanded(internalItem) ? 'mdi-chevron-up' : 'mdi-chevron-down'"
-                :text="isExpanded(internalItem) ? 'Collapse' : 'More info'"
-                class="text-none"
-                color="medium-emphasis"
-                size="small"
-                variant="text"
-                border
-                slim
-                @click="toggleExpand(internalItem)"
-            />
-        </template>
+            <template v-slot:expanded-row="{ columns, item }">
+                <tr>
+                    <td :colspan="columns.length" class="py-2">
+                        <v-sheet rounded="lg" border>
+                            <v-table density="compact">
+                                <thead class="bg-surface-light">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Content</th>
+                                    <th>Tags</th>
+                                </tr>
+                                </thead>
 
-        <template v-slot:expanded-row="{ columns, item }">
-            <tr>
-                <td :colspan="columns.length" class="py-2">
-                    <v-sheet rounded="lg" border>
-                        <v-table density="compact">
-                            <thead class="bg-surface-light">
-                            <tr>
-                                <th>Image</th>
-                                <th>Content</th>
-                                <th>Tags</th>
-                            </tr>
-                            </thead>
-
-                            <tbody>
-                            <tr>
-                                <td>
-                                    <v-img
-                                        width="300"
-                                        :src="'/images/'+item.image"
-                                        class="ma-1"
-                                    />
-                                </td>
-                                <td class="py-2">{{ item.content }}</td>
-                                <td>
-                                    <v-chip-group column>
-                                        <v-chip
-                                            v-for="tag in item.tags"
-                                            :key="tag.id"
+                                <tbody>
+                                <tr>
+                                    <td>
+                                        <v-img
+                                            width="300"
+                                            :src="'/images/'+item.image"
                                             class="ma-1"
-                                            color="primary"
-                                            text-color="white"
-                                            size="small"
-                                            :text="'#'+tag.name"
                                         />
-                                    </v-chip-group>
-                                </td>
-                            </tr>
-                            </tbody>
-                        </v-table>
-                    </v-sheet>
-                </td>
-            </tr>
-        </template>
+                                    </td>
+                                    <td class="py-2">{{ item.content }}</td>
+                                    <td>
+                                        <v-chip-group column>
+                                            <v-chip
+                                                v-for="tag in item.tags"
+                                                :key="tag.id"
+                                                class="ma-1"
+                                                color="primary"
+                                                text-color="white"
+                                                size="small"
+                                                :text="'#'+tag.name"
+                                            />
+                                        </v-chip-group>
+                                    </td>
+                                </tr>
+                                </tbody>
+                            </v-table>
+                        </v-sheet>
+                    </td>
+                </tr>
+            </template>
 
-        <template v-slot:loading>
-            <v-skeleton-loader type="table-row@11"/>
-        </template>
-    </v-data-table>
-
-
-    <v-pagination
-        v-model="currentPage"
-        total-visible="8"
-        :length="lastPage"
-        class="mt-4"
-        :disabled="loading"
-    >
-        <template v-slot:prev="props">
-            <Link
-                as="button"
-                :disabled="props.disabled || loading"
-                :href="getPaginationData(currentPage - 1)"
-                preserve-state
-                preserve-scroll
-                @start="loading = true"
-                @finish="loading = false"
-            >
-                <v-btn
-                    :disabled="props.disabled || loading"
-                    icon="mdi-chevron-left"
-                    density="comfortable"
-                    variant="text"
-                />
-            </Link>
-        </template>
-
-        <template v-slot:item="{page, isActive}">
-            <Link
-                :disabled="isActive"
-                as="button"
-                :href="getPaginationData(page)"
-                :active="isActive"
-                preserve-state
-                preserve-scroll
-                @start="loading = true"
-                @finish="loading = false"
-                @cancel="loading = false"
-            >
-                <v-btn
-                    :disabled="isActive || loading"
-                    :active="isActive"
-                    :variant="isActive ? 'flat' : 'text'"
-                    :color="isActive ? 'primary' : undefined"
-                    :text="page"
-                />
-            </Link>
-        </template>
-
-        <template v-slot:next="props">
-            <Link
-                as="button"
-                :disabled="props.disabled || loading"
-                :href="getPaginationData(currentPage + 1)"
-                preserve-state
-                preserve-scroll
-                @start="loading = true"
-                @finish="loading = false"
-            >
-                <v-btn
-                    :disabled="props.disabled || loading"
-                    icon="mdi-chevron-right"
-                    variant="text"
-                    density="comfortable"
-                />
-            </Link>
-        </template>
-    </v-pagination>
+            <template v-slot:loading>
+                <v-skeleton-loader type="table-row@11"/>
+            </template>
+        </v-data-table>
+    </v-sheet>
 </template>
 
 <script setup>
@@ -217,7 +232,7 @@ import SortableHeader from "@/Pages/Posts/SortableHeader.vue";
 const headers = [
     {title: 'Title', key: 'title', align: 'start', sortable: false},
     {title: 'Content', key: 'content', sortable: false},
-    {title: 'Username', key: 'user',align: "center", sortable: false},
+    {title: 'Username', key: 'user', align: "center", sortable: false},
     {title: 'Published At', key: 'published_at', sortable: false},
     {title: 'Tags', key: 'tags', align: 'start', sortable: false},
 ];
@@ -259,7 +274,7 @@ const performSearch = () => {
             page: 1,
         });
 
-        router.get(`${currentPath.value}?${params.toString()}`,{}, {
+        router.get(`${currentPath.value}?${params.toString()}`, {}, {
             replace: true,
             preserveState: true,
             preserveScroll: true,
