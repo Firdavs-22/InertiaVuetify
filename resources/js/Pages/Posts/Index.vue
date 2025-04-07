@@ -259,7 +259,17 @@ const performSearch = () => {
             page: 1,
         });
 
-        router.get(`${currentPath.value}?${params.toString()}`);
+        router.get(`${currentPath.value}?${params.toString()}`,{}, {
+            replace: true,
+            preserveState: true,
+            preserveScroll: true,
+            onStart: () => {
+                loading.value = true;
+            },
+            onFinish: () => {
+                loading.value = false;
+            },
+        });
     }, 300);
 };
 
