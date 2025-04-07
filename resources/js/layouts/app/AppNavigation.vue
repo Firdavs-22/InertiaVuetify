@@ -2,12 +2,18 @@
 import Link from "@/layouts/app/Link"
 
 
-defineProps({
+const props = defineProps({
     drawer: Boolean,
     links: Array,
     page: Object
 })
 
+const isActive = (url) => {
+    if (url === '/') {
+        return props.page.url === url
+    }
+    return props.page.url.startsWith(url)
+}
 
 </script>
 
@@ -35,7 +41,7 @@ defineProps({
                 <Link
                     v-for="link in links"
                     :key="link.url"
-                    :active="page.url === link.url"
+                    :active="isActive(link.url)"
                     :title="link.title"
                     :icon="link.icon"
                     :url="link.url"
