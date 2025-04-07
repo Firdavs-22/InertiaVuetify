@@ -30,14 +30,12 @@
         </template>
 
         <template v-slot:header.published_at="{ column }">
-            <th :align="column.align">
-                <SortableHeader
-                    label="Published At"
-                    sort-by="published_at"
-                    :current-sort="sort"
-                    @sort="handleSort"
-                />
-            </th>
+            <SortableHeader
+                label="Published At"
+                sort-by="published_at"
+                :current-sort="sort"
+                @sort="handleSort"
+            />
         </template>
 
         <template v-slot:item.title="{value}">
@@ -211,19 +209,18 @@
 </template>
 
 <script setup>
-import {Link, router } from "@inertiajs/vue3";
+import {Link, router} from "@inertiajs/vue3";
 import {getAvatar} from "@/utlis/avatar.js";
 import {ref, watch} from "vue";
 import SortableHeader from "@/Pages/Posts/SortableHeader.vue";
 
 const headers = [
-    { title: 'Title', key: 'title', align: 'start', sortable: false },
-    { title: 'Content', key: 'content',sortable: false },
-    { title: 'Username', key: 'user', sortable: false },
-    { title: 'Published At', key: 'published_at', align: 'end', sortable: false },
-    { title: 'Tags', key: 'tags', align: 'end' , sortable: false},
+    {title: 'Title', key: 'title', align: 'start', sortable: false},
+    {title: 'Content', key: 'content', sortable: false},
+    {title: 'Username', key: 'user',align: "center", sortable: false},
+    {title: 'Published At', key: 'published_at', sortable: false},
+    {title: 'Tags', key: 'tags', align: 'start', sortable: false},
 ];
-
 
 
 const props = defineProps({
@@ -270,9 +267,9 @@ const getPaginationData = (page) => {
     const params = new URLSearchParams({
         page: page,
         // Preserve existing filters from props
-        ...(props.sort.by && { sort_by: props.sort.by }),
-        ...(props.sort.direction && { sort_direction: props.sort.direction }),
-        ...(props.search && { search: props.search }),
+        ...(props.sort.by && {sort_by: props.sort.by}),
+        ...(props.sort.direction && {sort_direction: props.sort.direction}),
+        ...(props.search && {search: props.search}),
     });
 
     // Convert to string and remove empty params
